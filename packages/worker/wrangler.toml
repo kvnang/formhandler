@@ -1,0 +1,15 @@
+name = "formhandler"
+main = "src/index.ts"
+compatibility_date = "2022-12-21"
+account_id = "7ea3718fc0fd423e23c700b0ee874b57"
+usage_model = "bundled"
+
+[[r2_buckets]]
+binding = 'R2_BUCKET'
+bucket_name = 'uploads'
+preview_bucket_name = 'uploads-preview'
+
+[[ d1_databases ]]
+binding = "D1_DATABASE" # i.e. available in your Worker on env.DB
+database_name = "submissions"
+database_id = "90061462-6cef-4326-86cd-b996ea25c907"
