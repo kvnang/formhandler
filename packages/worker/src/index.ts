@@ -20,12 +20,19 @@ export interface Env {
 function isAuthenticated(request: Request, env: Env) {
   const authHeader = request.headers.get("Authorization");
 
-  if (!authHeader) return false;
+  if (!authHeader)
+    return {
+      user: null,
+      isAuthenticated: false,
+    };
 
   const basicAuth = authHeader.split(" ")[1];
-  const apiKey = atob(basicAuth).split(":")[1];
+  const [user, apiKey] = atob(basicAuth).split(":");
 
-  return apiKey === env.API_KEY;
+  return {
+    user,
+    authenticated: apiKey === env.API_KEY,
+  };
 }
 
 export default {
@@ -41,8 +48,10 @@ export default {
     }
 
     // Validate API Key in the Authorization header
+    const { user, authenticated } = isAuthenticated(request, env);
+
     if (request.method !== "GET") {
-      if (!isAuthenticated(request, env)) {
+      if (!authenticated) {
         return new Response("Unauthorized", {
           status: 401,
           headers: CORS_HEADERS,
@@ -70,14 +79,27 @@ export default {
     }
 
     if (patterns["v1/submit"].test(request.url)) {
+      if (request.method !== "POST") {
+        return new Response("Invalid method", {
+          status: 405,
+        });
+      }
+
       const submitData = await handleSubmit(request, env);
 
       // Log the data to the D1
       try {
+        const form_id = submitData["form-name"] || "Unknown Form";
         await env.D1_DATABASE.prepare(
-          `INSERT INTO submissions (id, data, timestamp) VALUES (?, ?, ?)`
+          `INSERT INTO submissions (id, data, timestamp, form_id, account_id) VALUES (?, ?, ?, ?, ?)`
         )
-          .bind(crypto.randomUUID(), JSON.stringify(submitData), Date.now())
+          .bind(
+            crypto.randomUUID(),
+            JSON.stringify(submitData),
+            Date.now(),
+            form_id,
+            user
+          )
           .run();
       } catch (err) {
         console.log(`INSERT ERROR`, err);

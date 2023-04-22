@@ -3,12 +3,6 @@ import { sha1 } from "../utils";
 import { uploadFile } from "..";
 
 export async function handleSubmit(request: Request, env: Env) {
-  if (request.method !== "POST") {
-    return new Response("Invalid method", {
-      status: 405,
-    });
-  }
-
   const formData = await request.formData();
 
   const object: Record<string, any> = {};
@@ -32,6 +26,8 @@ export async function handleSubmit(request: Request, env: Env) {
       object[key] = value;
     }
   }
+
+  console.log(object, object["form-name"], JSON.stringify(object));
 
   return object;
 }
